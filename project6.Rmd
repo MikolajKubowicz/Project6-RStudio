@@ -1,0 +1,128 @@
+---
+title: "Project 6"
+output: html_notebook
+---
+```{r}
+library(tidyverse)
+library(nycflights13)
+
+data("flights")
+data("airports")
+
+```
+#1
+```{r}
+filtered_carriers <- fl_new %>%
+  filter(carrier %in% c("UA", "AA", "US", "WN", "EV")) %>%
+  group_by(carrier) %>%
+  summarize(mean_total_delay = mean(total_delay, na.rm = TRUE)) %>%
+  arrange(mean_total_delay)
+
+filtered_carriers
+```
+```{r}
+fl_new_full <- fl_new %>%
+  left_join(airports, by = c("dest" = "faa")) %>%
+  rename(dest_name = name, dest_lat = lat, dest_lon = lon) %>% # Rename destination columns
+  left_join(airports, by = c("origin" = "faa")) %>%
+  rename(origin_name = name, origin_lat = lat, origin_lon = lon) # Rename origin columns
+head(fl_new_full)
+
+```
+#4
+```{r}
+largest_avg_delay <- fl_new %>%
+  group_by(month) %>%
+  summarize(avg_total_delay = mean(total_delay, na.rm = TRUE)) %>%
+  arrange(desc(avg_total_delay)) %>%
+  slice(1)
+
+largest_avg_delay
+
+```
+
+#5
+```{r}
+avg_arr_delay_tampa_sept <- fl_new_full %>%
+  filter(dest_name == "Tampa Intl", month == 9) %>%
+  summarize(avg_arr_delay = mean(arr_delay, na.rm = TRUE))
+
+avg_arr_delay_tampa_sept
+
+```
+#6
+```{r}
+mean_distance_chicago_july <- fl_new_full %>%
+  filter(dest_name == "Chicago Ohare Intl", month == 7) %>%
+  summarize(mean_distance = mean(distance, na.rm = TRUE))
+mean_distance_chicago_july
+```
+#7
+
+```{r}
+largest_avg_arr_delay <- fl_new_full %>%
+  group_by(dest_name) %>%
+  summarize(avg_arr_delay = mean(arr_delay, na.rm = TRUE)) %>%
+  arrange(desc(avg_arr_delay)) %>%
+  slice(1)
+largest_avg_arr_delay
+
+```
+#8
+```{r}
+largest_avg_arr_delay_10000 <- fl_new_full %>%
+  group_by(dest_name) %>%
+  filter(n() >= 10000) %>% # Keep only destinations with at least 10,000 arrivals
+  summarize(avg_arr_delay = mean(arr_delay, na.rm = TRUE)) %>%
+  arrange(desc(avg_arr_delay)) %>%
+  slice(1)
+largest_avg_arr_delay_10000
+
+```
+#9
+```{r}
+library(ggplot2)
+ggplot(fl_new_full, aes(x = distance)) +
+  geom_histogram(binwidth = 100, color = "black", fill = "gray") +
+  labs(title = "Histogram of Flight Distances",
+       x = "Distance (miles)",
+       y = "Count")
+
+```
+
+```{r}
+set.seed(123) # For reproducibility
+sampled_data <- fl_new_full %>% sample_n(10000)
+
+ggplot(sampled_data, aes(x = distance, y = arr_delay)) +
+  geom_point(alpha = 0.5) +
+  labs(title = "Scatter Plot of Arrival Delay vs Distance",
+       x = "Distance (miles)",
+       y = "Arrival Delay (minutes)")
+
+```
+
+
+```{r}
+library(ggplot2)
+
+fl_ua <- fl_new_full %>% filter(carrier == "UA")
+
+ggplot(fl_ua, aes(x = arr_delay)) +
+  geom_histogram(bins = 100, color = "black", fill = "gray") +
+  labs(title = "Histogram of Arrival Delay for Carrier UA",
+       x = "Arrival Delay (minutes)",
+       y = "Count") +
+  xlim(-100, 500)
+
+```
+#3
+```{r}
+fl_airport <- fl_new %>%
+  inner_join(airports, by = c("dest" = "faa"))
+tampa_june_flights <- fl_airport %>%
+  filter(name == "Tampa Intl", month == 6) %>%
+  tally()
+tampa_june_flights
+```
+
